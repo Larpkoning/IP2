@@ -65,7 +65,7 @@ plt.ylabel('$x$(m)')
 
 plt.plot(t,x_1,'r.', markersize=1, label='fietser 1')
 plt.plot(t,x_2,'b.', markersize=1, label='fietser 2')
-
+plt.legend()
 plt.show()
 
 
@@ -74,14 +74,57 @@ plt.show()
 Wat op zou kunnen vallen is dat de snelheid in een cel constant gehouden wordt ($x_i = v_i\cdot\Delta t$), terwijl de snelheid tijdens het tijdsinterval $\Delta t$ toeneemt. De oplossing is dus een benadering van de exacte oplossing, maar door deze methode (Euler explicit forward), moeten we wel voorzichtig zijn met de grootte van het tijdsinterval.
 
 ```{exercise}
-Maak het tijdsinterval $dt$ groter en vergelijk de afgelegde weg in de tien seconde. Wat gebeurt er met de afgelegde weg als we $dt$ groter maken? Is dat logisch vanuit gezien de natuurkunde? En gezien de methode van discretisatie? Leg uit.
+Maak het tijdsinterval $dt$ groter en vergelijk de afgelegde weg in de tien seconde. Wat gebeurt ermet de afgelegde weg als we $dt$ groter maken? Is dat logisch vanuit gezien de natuurkunde? En gezien de methode van discretisatie? Leg uit.
 ```
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Beginwaarden
+dt = 0.5                  #s
+t_e = 10                   #s
+N = int(t_e/dt)+1
+t = np.arange(0,t_e+dt,dt) #s
+
+# fietser 1
+x_1 = np.zeros(N)          #m     maakt array van lengte N met alleen maar waarde 0.
+v_1 = 5                    #m/s
+
+# fietser 2
+x_2 = np.zeros(N)          #m     
+v_2 = np.zeros(N)          #m/s     
+a_2 = .5                   #m/s^2     
+
+# Uitvoeren van de simulatie
+for i in range(0,N-1):
+    x_1[i+1] = x_1[i] + v_1*dt
+    
+    x_2[i+1] = x_2[i] + v_2[i]*dt
+    v_2[i+1] = v_2[i] + a_2*dt
+
+# Plotten van de gegevens.    
+plt.figure()
+
+plt.xlabel('$t$(s)')
+plt.ylabel('$x$(m)')
+
+plt.plot(t,x_1,'r.', markersize=1, label='fietser 1')
+plt.plot(t,x_2,'b.', markersize=1, label='fietser 2')
+plt.legend()
+plt.show()
+
+
+```
+
+bij grotere dt is het enige verschil dat er minder punten zijn, de afgelegde weg blijft hetzelfde
 
 
 <!-- Jouw antwoord hier  -->
 
 ```python
-%reset -f  #clears memory as we don't need it further down 
+%reset -f 
+import numpy as np
 ```
 
 ## Naar een deeltjesmodel
@@ -183,6 +226,7 @@ Voorspel en controleer vervolgens met onderstaande code.
 ```python
 import numpy as np
 import matplotlib.pyplot as plt
+from numpy import random
 
 plt.figure()
 for particle in particle_array:
@@ -230,6 +274,30 @@ En als je wilt gaan voor een uitdaging:
 
 ```python
 ### YOUR CODE HERE ###
+import copy
+#maken van deeltjes
+particle_begin=[]
+for i in range(10):
+    particle_begin.append(ParticleClass(m=1.0, v=[random.randint(-5,5), 0.05*(1+i)], r=[i+1, 0.0], R=1.0))
+#updating de positie voor 1 seconde later
+particle_end=[]
+for i in range(10):
+    particle_end.append(copy.deepcopy(particle_begin[i]))
+    particle_end[i].update_position(1.0)
+#maken van een figuur
+plt.figure()
+plt.ylim(-1,1)
+
+for p in particle_begin:
+    plt.plot(p.r[0],p.r[1],'.')
+i=0
+for p in particle_end:
+    plt.plot(p.r[0],p.r[1],'.', label=f' deeltje {i}')
+    i+=1
+plt.legend()
+plt.show()
+
+len(particle_end)==len(particle_begin)
 ```
 
 Onze simulaties worden snel “zwaar”. Er moeten veel berekeningen gedaan worden en dat kost nu eenmaal tijd. Nu is het wel zo dat sommige berekeningen meer tijd kosten dan anderen. Om te kijken of een stukje code geoptimaliseerd kan worden, moeten we een timer maken. Dat kan met onderstaande code:
@@ -248,8 +316,17 @@ for i in range(N):
 
 eind = time.time()
 lengte = eind - start
-
 print("Dit kostte ", lengte, "seconde!")
+
+start2=time.time()
+
+array1=[]
+array2=np.append(array1,np.random.rand(N))
+
+eind2=time.time()
+lengte2=eind2-start2
+keer=lengte/lengte2
+print(f"de andere manieris {keer} keer korter")
 ```
 
 Idealiter draaien we de bovenstaande code een aantal keer zodat we een goede schatting hebben van de rekentijd.
@@ -268,11 +345,11 @@ Met de MyST extentie in jupyterlab kun je gebruik maken van [eval](https://mystm
 ```
 
 ```{solution} ex-intro-3
-De runtime is {eval}`<naam variabele>` korter.
+De runtime is {eval}`<keer>` korter.
 ```
 
 ```python
-
+lengte-lengte2
 ```
 
 ## Aan de slag met deeltjes
@@ -338,6 +415,7 @@ We willen de beweging van dat deeltje straks bestuderen en moeten dus een plot m
 fig, ax = plt.subplots()
 ax.set_xlim(-10, 10)
 ax.set_ylim(-10, 10)
+
 ax.set_aspect('equal')
 ax.set_title("Animatie")
 ax.set_xlabel("x")
@@ -354,6 +432,7 @@ Met FuncAnimation wordt die animatie voor ons gedaan.
 ```python
 # Initialisieren van de functie voor de animatie
 def init():
+    
     dot.set_data([], [])
     return dot,
 
@@ -403,7 +482,7 @@ def init():
     dot.set_data([], [])
     return dot,
 
-# Update function for each frame
+Update function for each frame
 def update(frame):
     particle.update_position()
     dot.set_data([particle.r[0]], [particle.r[1]])
@@ -431,9 +510,16 @@ Controleer je eigen antwoord door de functie hierboven even te vervangen door de
 # doorlopende doos
 def update(frame):
     particle.update_position()
+    if particle.r[0]>10:
+        particle.r[0]-=20 #=-10 werkt ook maar dan teleporteer je hem precies op boundary (lijkt schokkerig)
+    if particle.r[0]<-10:
+        particle.r[0]+=20 #=10 werkt hier ook, maar wederom zelfde principe
+    if particle.r[1]>10:
+        particle.r[1]-=20
+    if particle.r[1]<-10:
+        particle.r[1]+=20
     dot.set_data([particle.r[0]], [particle.r[1]])
-### YOUR CODE HERE ###
-    return dot,         
+    return dot,   
 ```
 
 ```{exercise} Harde wanden
@@ -447,8 +533,11 @@ Test wederom je code door de vernieuwde functie hierboven te plakken.
 # harde wanden
 def update(frame):
     particle.update_position()
+    if particle.r[0]>=10 or particle.r[0]<=-10:
+        particle.v[0]*=-1
+    if particle.r[1]>=10 or particle.r[1]<=-10:
+        particle.v[1]*=-1
     dot.set_data([particle.r[0]], [particle.r[1]])
-### YOUR CODE HERE ###
     return dot,
 ```
 
@@ -462,8 +551,7 @@ Verander nu de code zodanig dat de beginsnelheid gegeven wordt door $\vec{v}=5\h
 # Simulation parameters
 dt = 0.1         # time step
 num_steps = 500  # number of time steps
-
-### YOUR CODE HERE ###
+particle = ParticleClass(m=1.0, v=[5.0, 3.0], r=[0.0, 0.0],R=1.0) 
 
 # Create the figure and axis
 fig, ax = plt.subplots()
@@ -485,8 +573,11 @@ def init():
 # Update function for each frame
 def update(frame):
     particle.update_position()
+    if particle.r[0]>=10 or particle.r[0]<=-10:
+        particle.v[0]*=-1
+    if particle.r[1]>=10 or particle.r[1]<=-10:
+        particle.v[1]*=-1
     dot.set_data([particle.r[0]], [particle.r[1]])
-    ### YOUR CODE HERE ###
     return dot,
 
 # Create animation
@@ -528,12 +619,25 @@ class ParticleClass:
 
 
 ```python
+class ParticleClass:
+    def __init__(self, m, v, r, R):
+        self.m = m                         # mass of the particle
+        self.v = np.array(v, dtype=float)  # velocity vector
+        self.r = np.array(r, dtype=float)  # position vector
+        self.R = R                         # radius of the particle
 
+    def update_position(self):
+        self.r += self.v * dt
+    
+    def update_velocity(self, a):
+        self.v += a*dt
 # Simulation parameters
 dt = 0.1         # time step
 num_steps = 500  # number of time steps
+a=np.array([0.0,-9.81]) #zwaartekracht
 particle = ParticleClass(m=1.0, v=[5.0, 0], r=[0.0, 0.0],R=1.0)  
-### YOUR CODE HERE ###
+
+
 # Create the figure and axis
 fig, ax = plt.subplots()
 ax.set_xlim(-10, 10)
@@ -555,9 +659,11 @@ def init():
 def update(frame):
     particle.update_velocity(a)
     particle.update_position()
-    
+    if particle.r[0]>=10 or particle.r[0]<=-10:
+        particle.v[0]*=-1
+    if particle.r[1]>=10 or particle.r[1]<=-10:
+        particle.v[1]*=-1
     dot.set_data([particle.r[0]], [particle.r[1]])
-    ### YOUR CODE HERE ###
     return dot,
 
 # Create animation
@@ -663,11 +769,14 @@ Maak de code hieronder voor twee deeltjes die bewegen in een afgesloten doos. Be
 # Simulation parameters
 dt = 0.1         # time step
 num_steps = 500  # number of time steps
+a=np.array([0,-9.81])
 particleA = ParticleClass(m=1.0, v=[0, 0], r=[0.0, 0.0],R=1.0)  
-### YOUR CODE HERE ###
+particleB = ParticleClass(m=1.0, v=[1,0],  r=[0.0,0.0], R=1.0) #idk wat de initiële horizontale snelheid moest zijn dus heb 1 gekozen
 
-track_x = []
-track_y = []
+track_xA = []
+track_yA = []
+track_xB = []
+track_yB = []
 
 # Create the figure and axis
 fig, ax = plt.subplots()
@@ -677,7 +786,8 @@ ax.set_aspect('equal')
 ax.set_title("Particle Animation")
 ax.set_xlabel("x")
 ax.set_ylabel("y")
-track_line, = ax.plot([], [], 'r--', linewidth=1)  
+track_lineA, = ax.plot([], [], 'r--', linewidth=1)
+track_lineB, = ax.plot([], [], 'b--', linewidth=1) 
 
 # Create the particle as a red dot
 dotA, = ax.plot([], [], 'ro', markersize=10)
@@ -693,14 +803,17 @@ def update(frame):
     particleA.update_position()
     particleA.update_velocity(a)
 
-### YOUR CODE HERE ###
+    particleB.update_position()
+    particleB.update_velocity(a)
 
-    track_x.append(particleA.r[0])
-    track_y.append(particleA.r[1])
-    track_line.set_data(track_x, track_y)
+    track_xA.append(particleA.r[0])
+    track_yA.append(particleA.r[1])
+    track_lineA.set_data(track_xA, track_yA)
     
-    dotA.set_data([particleA.r[0]], [particleA.r[1]])
-    dotB.set_data([particleB.r[0]], [particleB.r[1]])
+    track_xB.append(particleB.r[0])
+    track_yB.append(particleB.r[1])
+    
+
 
     # Check if either particle is outside the bounds, np.abs could be used but is slower
     if particleA.r[0]**2>100: 
@@ -713,7 +826,12 @@ def update(frame):
     if particleB.r[1]**2>100: 
         particleB.v[1] = -particleB.v[1]
 
-    return dot, track_line
+    
+    track_lineA.set_data(track_xA, track_yA)
+    track_lineB.set_data(track_xB,track_yB)
+    dotA.set_data([particleA.r[0]], [particleA.r[1]])
+    dotB.set_data([particleB.r[0]], [particleB.r[1]])
+    return dot, track_lineA, track_lineB
 
 # Create animation
 ani = FuncAnimation(fig, update, frames=range(200), init_func=init, blit=True, interval=50)
