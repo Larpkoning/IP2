@@ -482,7 +482,7 @@ def init():
     dot.set_data([], [])
     return dot,
 
-Update function for each frame
+#Update function for each frame
 def update(frame):
     particle.update_position()
     dot.set_data([particle.r[0]], [particle.r[1]])
@@ -683,7 +683,7 @@ Herinner wat we in Q1 hebben gedaan bij de basics van een numerieke simulatie...
 ```
 
 ```{solution} ex-deeltjesmodel-6
-Jouw antwoord hier...
+Dat elke stuiter minder hoog is dan de vorige, dus er gaat energie verloren in de vorm van wrijving
 ```
 
 Een optie om de simulatie te verbeteren is de tijdstap $\Delta t$ kleiner te maken, maar dan hebben we ook meer geduld meer nodig - het aantal berekeningen schaalt met $\frac{1}{\Delta t}$. Een tweede optie is een meer directe oplossing: We weten dat $a = \mathrm{const.}$ en daarom weten we ook de bewegingsvergelijking van het deeltje!
@@ -800,12 +800,19 @@ def init():
 
 # Update function for each frame
 def update(frame):
+#eerst positie en dan velocity update laat het lijken alsof er geen energieverlies optreed
     particleA.update_position()
     particleA.update_velocity(a)
-
+    
     particleB.update_position()
     particleB.update_velocity(a)
-
+#eerst velocity en dan positie updaten laat energieverlies optreden maar balletjes duiken op gegeven moment onder de barrière
+    # particleA.update_velocity(a)
+    # particleA.update_position()
+   
+    # particleB.update_velocity(a)
+    # particleB.update_position()
+    
     track_xA.append(particleA.r[0])
     track_yA.append(particleA.r[1])
     track_lineA.set_data(track_xA, track_yA)
@@ -823,9 +830,17 @@ def update(frame):
 
     if particleB.r[0]**2>100:
         particleB.v[0] = -particleB.v[0]
-    if particleB.r[1]**2>100: 
+    if particleB.r[1]**2>100:
         particleB.v[1] = -particleB.v[1]
-
+    # if particleA.r[0]>=10 or particleA.r[0]<=-10:
+    #     particleA.v[0]*=-1
+    # if particleA.r[1]>=10 or particleA.r[1]<=-10:
+    #     particleA.v[1]*=-1
+            
+    # if particleB.r[0]>=10 or particleB.r[0]<=-10:
+    #     particleB.v[0]*=-1
+    # if particleB.r[1]>=10 or particleB.r[1]<=-10:
+    #     particleB.v[1]*=-1
     
     track_lineA.set_data(track_xA, track_yA)
     track_lineB.set_data(track_xB,track_yB)
@@ -857,13 +872,13 @@ Nu je een beetje weet hoe een numeriek model werkt, hoe je boundaries kunt opgev
 ```
 
 ```{solution} ex-deeltjes_10
-Jouw antwoord.
+1. $d(R_2,R_1)\leq r_1+r_2$
 ```
 
 ```python tags=["NB1_botsingsvoorwaarde"]
 # Define a class for a particle
 
-# Maken van de class met botsing
+# Maken van de class met botsing (aanname dat botsing elastisch is)
 class ParticleClass:
     def __init__(self, m, v, r, R):
         self.m = m                  
@@ -875,8 +890,24 @@ class ParticleClass:
         self.r += self.v * dt  
 
     def collide_detection(self, other):
-        ### YOUR CODE HERE ###
-        return  dx**2+dy**2 < rr**2 
+        m1,m2=self.m,other.m
+        v1,v2=self.v[0],other.v[0]
+        r1,r2=self.r[0],other.r[0]
+        R1,R2=self.R,other.R
+        return np.abs(r1-r2)<=R1+R2 and (v1-v2)*(r1-r2)<0
+            
+
+    def collision(self, other):
+        if self.collide_detection(other):
+            m1,m2=self.m,other.m
+            v1,v2=self.v[0],other.v[0]
+            self.v[0]=((m1-m2)/(m1+m2))*v1+2*(m2/(m1+m2))*v2
+            other.v[0]=2*(m1/(m1+m2))*v1+((m2-m1)/(m1+m2))*v2
+           
+        
+               
+    
+        # return  dx**2+dy**2 < rr**2 
 ```
 
 ```python
@@ -904,7 +935,7 @@ ax.set_ylabel("y")
 track_line, = ax.plot([], [], 'r--', linewidth=1)  
 
 # Toon het deeltje als een rode stip
-dot, = ax.plot([], [], 'ro', markersize=10); # semicolon to suppress output
+#dot, = ax.plot([], [], 'ro', markersize=10); # semicolon to suppress output
 dotA, = ax.plot([], [], 'ro', markersize=10)
 dotB, = ax.plot([], [], 'bo', markersize=10)
 
@@ -915,21 +946,12 @@ def init():
 
 # Updaten van de functie per frame
 def update(frame):
-    particleA.update_position()
-    particleB.update_position()
-
-    track_x.append(particleA.r[0])
-    track_y.append(particleA.r[1])
-    track_line.set_data(track_x, track_y)
     
-    dotA.set_data([particleA.r[0]], [particleA.r[1]])
-    dotB.set_data([particleB.r[0]], [particleB.r[1]])
 
     # botsing tussen de deeltjes onderling
     if particleA.collide_detection(particleB):
-        ### YOUR CODE HERE ###
-
-
+        particleA.collision(particleB)
+    
     # botsing met de wand
     if particleA.r[0]**2>100: 
         particleA.v[0] = -particleA.v[0]
@@ -941,6 +963,16 @@ def update(frame):
         particleB.v[0] = -particleB.v[0]
     if particleB.r[1]**2>100: 
         particleB.v[1] = -particleB.v[1]
+
+    particleA.update_position()
+    particleB.update_position()
+
+    track_x.append(particleA.r[0])
+    track_y.append(particleA.r[1])
+    track_line.set_data(track_x, track_y)
+    
+    dotA.set_data([particleA.r[0]], [particleA.r[1]])
+    dotB.set_data([particleB.r[0]], [particleB.r[1]])
 
     return dot, track_line
 
