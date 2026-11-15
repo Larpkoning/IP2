@@ -798,7 +798,7 @@ def init():
     dot.set_data([], [])
     return dot,
 
-# Update function for each frame
+# Update function for each frame, 
 def update(frame):
 #eerst positie en dan velocity update laat het lijken alsof er geen energieverlies optreed
     particleA.update_position()
@@ -1034,11 +1034,11 @@ Voeg op de juiste plaats(en) een update van de counter toe (per botsing moet de 
 
 Controleer de uitspraak in de video dat $\pi$ in eens opduikt bij de massaverhouding. 
 
-Wat is de beperkende factor in ons script om het aantal botsingen als functie van de massaverhouding te onderzokeen?
+Wat is de beperkende factor in ons script om het aantal botsingen als functie van de massaverhouding te onderzoeken?
 ```
 
 ```{solution} ex-deeltjes-12
-Jouw antwoord
+de beperkende factor is de tijdstap $dt$, voor nauwkeurigere resultaten is een veel kleinere $dt$ nodig wat onevenredig veel rekenkracht (en dus tijd om te laden) kost ten opzichte van de toegevoegde nauwkeurigheid
 ```
 
 
@@ -1064,7 +1064,7 @@ class ParticleClass:
 dt = 0.1         # time step
 num_steps = 530  # number of time steps
 m1 = 1.0
-m2 = 1.0
+m2 = 50.0
 
 particleA = ParticleClass(m=m1, v=[0, 0], r=[-4.0, 0.0],R=0.45)  
 particleB = ParticleClass(m=m2, v=[-1, 0], r=[-2.0, 0.0],R=0.45)  
@@ -1082,14 +1082,16 @@ ax.set_xlabel("x")
 ax.set_ylabel("y")
 dot, = ax.plot([], [], 'ro', markersize=10); # semicolon to suppress output
 
-counter = 0
+counter = 0 #counts collisions between the particle
+muurcounter=0 #counts collisions between the particles and the wall
 
 # Create the particle as a red dot
 dotA, = ax.plot([], [], 'ro', markersize=10)
 dotB, = ax.plot([], [], 'bo', markersize=10)
 
 counter_text = ax.text(-9.5, 9, "")
-
+muurcounter_text=ax.text(-9.5, 8, "")
+totalcounter_text=ax.text(-9.5, 7,"")
 # Initialization function for animation
 def init():
     dot.set_data([], [])
@@ -1097,15 +1099,16 @@ def init():
 
 # Update function for each frame
 def update(frame):
-    global counter
+    global counter,muurcounter,totalcounter
     particleA.update_position()
     particleB.update_position()
 
     dotA.set_data([particleA.r[0]], [particleA.r[1]])
     dotB.set_data([particleB.r[0]], [particleB.r[1]])
 
-    counter_text.set_text(f"Collisions: {counter}")
-
+    counter_text.set_text(f"Collisions between particles: {counter}")
+    muurcounter_text.set_text(f"Collisions with the wall: {muurcounter}")
+    totalcounter_text.set_text(f"Collisions of any kind: {counter+muurcounter}")
     #collision detection and response
     if particleA.collide_detection(particleB):
         vA, vB, mA, mB, rA, rB = particleA.v, particleB.v, particleA.m, particleB.m, particleA.r, particleB.r
@@ -1113,28 +1116,28 @@ def update(frame):
         vB_new = vB - 2 * mA / (mA + mB) * np.dot(vB - vA, rB - rA) / (1e-12+np.linalg.norm(rB - rA))**2 * (rB - rA)
         particleA.v = vA_new
         particleB.v = vB_new
-        ### YOUR CODE HERE ###
+        counter+=1 #botsing tussen deeltjes gedetecteerd
 
 
     # wall collision detection and response
-    if particleA.r[0]**2>100: # Check if particle is outside the bounds, np.abs could be used but is slower
-        particleA.v[0] = -particleA.v[0]
-        ### YOUR CODE HERE ###
-    if particleA.r[1]**2>100: 
-        particleA.v[1] = -particleA.v[1]
-        ### YOUR CODE HERE ###
+    if particleA.r[0]>10 and particleA.v[0]>0:
+        particleA.v[0]=-particleA.v[0]
+        muurcounter+=1 #botsing tussen deeltje A en muur gedetecteerd
+    elif particleA.r[0]<-10 and particleA.v[0]<0:
+        particleA.v[0]=-particleA.v[0]
+        muurcounter+=1 #botsing tussen deeltje A en muur gedetecteerd
 
     dot.set_data([particleB.r[0]], [particleB.r[1]])
-    if particleB.r[0]**2>100: 
-        particleB.v[0] = -particleB.v[0]
-
-    if particleB.r[1]**2>100: 
-        particleB.v[1] = -particleB.v[1]
-
-    return dot, counter_text
+    if particleB.r[0]>10 and particleB.v[0]>0:
+        particleB.v[0]=-particleB.v[0]
+        
+    elif particleB.r[0]<-10 and particleB.v[0]<0:
+        particleB.v[0]=-particleB.v[0]
+       
+    return dotA,dotB, counter_text, muurcounter_text,totalcounter_text
 
 # Create animation
-ani = FuncAnimation(fig, update, frames=range(200), init_func=init, blit=True, interval=50)
+ani = FuncAnimation(fig, update, frames=range(300), init_func=init, blit=True, interval=50) #range vergroot want met 200 frames stopt hij VOOR laatste botsing plaatsvind
 
 # For Jupyter notebook:
 from IPython.display import HTML
@@ -1147,10 +1150,14 @@ Pas de bovenstaande code aan zodat $m_1 = 1$ en $m_2 = 50$. Run de code en geef 
 
 
 ```python tags=["NB1_eindantwoord"]
-#num_botsingen = ...
-### YOUR CODE HERE ###
+num_botsingen = counter+muurcounter
+print(f'er hebben {num_botsingen} botsingen plaatsgevonden, hiervan waren er {counter} botsingen tussen deeltjes onderling en {muurcounter} botsingen tussen een deeltje en de muur.')
 ```
 
 ```{exercise}
 Klaar? Bekijk de twee versies, kies de beste en doe een `Pull Request` naar `Main`. Je partner reviewt de code, doet eventueel suggesties. Je partner is ook degene die uiteindelijke  de Pull Request goed keurt.
+```
+
+```python
+
 ```
