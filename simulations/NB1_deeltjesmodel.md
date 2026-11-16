@@ -800,18 +800,13 @@ def init():
 
 # Update function for each frame, 
 def update(frame):
-#eerst positie en dan velocity update laat het lijken alsof er geen energieverlies optreed
+
     particleA.update_position()
     particleA.update_velocity(a)
     
     particleB.update_position()
     particleB.update_velocity(a)
-#eerst velocity en dan positie updaten laat energieverlies optreden maar balletjes duiken op gegeven moment onder de barrière
-    # particleA.update_velocity(a)
-    # particleA.update_position()
-   
-    # particleB.update_velocity(a)
-    # particleB.update_position()
+
     
     track_xA.append(particleA.r[0])
     track_yA.append(particleA.r[1])
