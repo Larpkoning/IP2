@@ -36,7 +36,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Beginwaarden
-dt = 0.25                  #s
+dt = 2.5                #s
 t_e = 10                   #s
 N = int(t_e/dt)+1
 t = np.arange(0,t_e+dt,dt) #s
@@ -120,6 +120,9 @@ plt.show()
 bij grotere dt is het enige verschil dat er minder punten zijn, de afgelegde weg blijft hetzelfde
 
 
+Als ik $dt$ groter maak dan 2.5, volgt er een error. Een hogere $dt$ levert minder datapunten. De afgelegde weg is een stuk minder accuraat met minder datapunten. Hoe meer datapunten (dus hoe kleinere $dt$), hoe beter de simulatie de werkelijke natuurkunde beschrijft. De natuurkunde bestaat uiteraard niet uit tijdsintervallen, maar daar is zijn grootheden continu.
+
+
 <!-- Jouw antwoord hier  -->
 
 ```python
@@ -164,6 +167,7 @@ $$ x_{n+1}=x_n + v\cdot\Delta t $$
 Laten we nu een ook echt een deeltje creëren en kijken wat we ermee kunnen doen.
 
 ```python
+import numpy as np
 # een enkel deeltje:
 this_particle = ParticleClass(m=1.0, v=[5.0, 0], r=[0.0, 0.0], R=1.0)
 print(this_particle)
@@ -316,17 +320,10 @@ for i in range(N):
 
 eind = time.time()
 lengte = eind - start
+
+
 print("Dit kostte ", lengte, "seconde!")
-
-start2=time.time()
-
-array1=[]
-array2=np.append(array1,np.random.rand(N))
-
-eind2=time.time()
-lengte2=eind2-start2
-keer=lengte/lengte2
-print(f"de andere manieris {keer} keer korter")
+print(array)
 ```
 
 Idealiter draaien we de bovenstaande code een aantal keer zodat we een goede schatting hebben van de rekentijd.
@@ -349,7 +346,17 @@ De runtime is {eval}`<keer>` korter.
 ```
 
 ```python
-lengte-lengte2
+start = time.time()
+
+array = np.array([])
+N = int(1e5)
+
+array = np.append(array,np.random.rand(1,N))
+
+eind = time.time()
+peer = eind - start
+
+print(f'De runtime is {eind/peer} korter')
 ```
 
 ## Aan de slag met deeltjes
@@ -478,15 +485,19 @@ ax.set_ylabel("y")
 dot, = ax.plot([], [], 'ro', markersize=10)
 
 # Initialization function for animation
-def init():
-    dot.set_data([], [])
-    return dot,
 
-#Update function for each frame
 def update(frame):
     particle.update_position()
     dot.set_data([particle.r[0]], [particle.r[1]])
-    return dot,
+    if particle.r[0] > 10:
+        particle.v[0] = -particle.v[0]
+    elif particle.r[0] < -10:
+        particle.v[0] = -particle.v[0]
+    if particle.r[1] > 10:
+        particle.v[1] = -particle.v[1]
+    elif particle.r[1] < -10:
+        particle.v[1] = -particle.v[1]  
+    return dot, 
 
 # Create animation
 ani = FuncAnimation(fig, update, frames=range(200), init_func=init, blit=True, interval=50)
@@ -496,6 +507,13 @@ from IPython.display import HTML
 HTML(ani.to_jshtml())
 
 ```
+
+Wat op zou kunnen vallen is dat de snelheid in een cel constant gehouden wordt ($x_i = v_i\cdot\Delta t$), terwijl de snelheid tijdens het tijdsinterval $\Delta t$ toeneemt. De oplossing is dus een benadering van de exacte oplossing, maar door deze methode (Euler explicit forward), moeten we wel voorzichtig zijn met de grootte van het tijdsinterval.
+
+```{exercise}
+Maak het tijdsinterval $dt$ groter en vergelijk de afgelegde weg in de tien seconde. Wat gebeurt er met de afgelegde weg als we $dt$ groter maken? Is dat logisch vanuit gezien de natuurkunde? En gezien de methode van discretisatie? Leg uit.
+```
+
 
 Een van de dingen die je kunt opmerken, is dat het deeltje niet in zijn doos blijft.
 
@@ -551,7 +569,8 @@ Verander nu de code zodanig dat de beginsnelheid gegeven wordt door $\vec{v}=5\h
 # Simulation parameters
 dt = 0.1         # time step
 num_steps = 500  # number of time steps
-particle = ParticleClass(m=1.0, v=[5.0, 3.0], r=[0.0, 0.0],R=1.0) 
+
+particle = ParticleClass(m=1.0, v=[5.0, 3.0], r=[0.0, 0.0], R=1.0)    # het maken van het deeltje met de juiste snelheid
 
 # Create the figure and axis
 fig, ax = plt.subplots()
@@ -619,6 +638,8 @@ class ParticleClass:
 
 
 ```python
+# Maken van de class met versnelling
+a = np.array([0.0, -9.81])
 class ParticleClass:
     def __init__(self, m, v, r, R):
         self.m = m                         # mass of the particle
@@ -667,12 +688,11 @@ def update(frame):
     return dot,
 
 # Create animation
-ani = FuncAnimation(fig, update, frames=range(200), init_func=init, blit=True, interval=50)
+ani = FuncAnimation(fig, update, frames=range(500), init_func=init, blit=True, interval=50)
 
 # For Jupyter notebook:
 from IPython.display import HTML
 HTML(ani.to_jshtml())
-
 ```
 
 ```{exercise}
@@ -709,7 +729,7 @@ class ParticleClass:
 # Simulation parameters
 dt = 0.1         
 num_steps = 500  
-particle = ParticleClass(m=1.0, v=[0, 0], r=[0.0, 0.0],R=1.0)  
+particle = ParticleClass(m=1.0, v=[1, 8], r=[0.0, 0.0],R=1.0)  
 a = np.array([0.0, -5.0])  
 
 track_x = []
@@ -771,7 +791,7 @@ dt = 0.1         # time step
 num_steps = 500  # number of time steps
 a=np.array([0,-9.81])
 particleA = ParticleClass(m=1.0, v=[0, 0], r=[0.0, 0.0],R=1.0)  
-particleB = ParticleClass(m=1.0, v=[1,0],  r=[0.0,0.0], R=1.0) #idk wat de initiële horizontale snelheid moest zijn dus heb 1 gekozen
+particleB = ParticleClass(m=1.0, v=[1, 0], r=[0.0, 0.0],R=1.0)
 
 track_xA = []
 track_yA = []
@@ -800,19 +820,14 @@ def init():
 
 # Update function for each frame, 
 def update(frame):
-#eerst positie en dan velocity update laat het lijken alsof er geen energieverlies optreed
+
     particleA.update_position()
     particleA.update_velocity(a)
     
     particleB.update_position()
     particleB.update_velocity(a)
-#eerst velocity en dan positie updaten laat energieverlies optreden maar balletjes duiken op gegeven moment onder de barrière
-    # particleA.update_velocity(a)
-    # particleA.update_position()
-   
-    # particleB.update_velocity(a)
-    # particleB.update_position()
-    
+
+ 
     track_xA.append(particleA.r[0])
     track_yA.append(particleA.r[1])
     track_lineA.set_data(track_xA, track_yA)
@@ -872,7 +887,9 @@ Nu je een beetje weet hoe een numeriek model werkt, hoe je boundaries kunt opgev
 ```
 
 ```{solution} ex-deeltjes_10
-1. $d(R_2,R_1)\leq r_1+r_2$
+De deeltjes willen allebeid dezelfde coördinaten hebben op hetzelfde moment. $r_1=r_2\land \vec{v}_1 \neq \vec{v}_2$
+$\\ |r_2-r_1|\le 2R$
+$\\ \sqrt{dx^2+dy^2}\le 2R$
 ```
 
 ```python tags=["NB1_botsingsvoorwaarde"]
@@ -1156,8 +1173,4 @@ print(f'er hebben {num_botsingen} botsingen plaatsgevonden, hiervan waren er {co
 
 ```{exercise}
 Klaar? Bekijk de twee versies, kies de beste en doe een `Pull Request` naar `Main`. Je partner reviewt de code, doet eventueel suggesties. Je partner is ook degene die uiteindelijke  de Pull Request goed keurt.
-```
-
-```python
-
 ```
