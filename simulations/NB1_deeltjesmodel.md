@@ -654,7 +654,7 @@ def update(frame):
     return dot,
 
 # Create animation
-ani = FuncAnimation(fig, update, frames=range(200), init_func=init, blit=True, interval=50)
+ani = FuncAnimation(fig, update, frames=range(500), init_func=init, blit=True, interval=50)
 
 # For Jupyter notebook:
 from IPython.display import HTML
@@ -794,8 +794,6 @@ def update(frame):
     particleB.update_position()
     particleB.update_velocity(a)
 
-
-    
     track_x.append(particleA.r[0])
     track_y.append(particleA.r[1])
     track_line.set_data(track_x, track_y)
