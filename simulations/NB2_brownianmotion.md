@@ -48,7 +48,11 @@ Als model gaan we uit van een deel van het volume van een fietsband die onder ee
 ```
 
 ```{solution} ex-recap-1
-### YOUR CODE HERE ###
+$pV=nRT\\
+(10*10^5 \mathrm{Pa})*V_{molecuul}={\frac{1}{6.02*10^{23}}}\mathrm{mol}*8.31446261815324JK^{-1}\mathrm{mol}^{-1}*293.15\mathrm{K}\\
+V_{molecuul}=4.0*10^{-27}\mathrm{m}^3\\
+V_{kubus}=(1.6*10^{-9}\mathrm{m})^3=4.1*10^{-27}\mathrm{m}^3\\
+V_{molecuul}\approx V_{kubus}$
 ```
 
 De simulatie die we gaan maken bevat maar twee dimensies. We kunnen het oppervlak per deeltje in deze simulatie daarom kiezen als het zojuist berekende $V_\text{molecuul}^{2/3}$.
@@ -68,18 +72,18 @@ Ook deze heb je hierna nodig.
 ```
 
 ```{solution} ex-recap-2
-### YOUR CODE HERE ###
+${\frac{1}{2}}mv^2={\frac{f}{2}}k_B T\\
+v=\sqrt{\frac{fk_BT}{m}}\\
+v=\sqrt{\frac{2*1.380649 * 10^{-23} \text{ J}\mathrm{K}^{-1}*293.15\mathrm{K}}{4.65*10^{-26}\mathrm{kg}}}= 4*10^2 \mathrm{ms^{-2}}$
 ```
 
 ```{exercise} Radius
 :label: ex-recap-3
 In de python cell hieronder staan enkele waarden gegeven. Het aantal deeltjes $N=40$ is beperkt, dit om de rekentijd van het model te beperken. 
 ```
-
-```{solution} ex-recap-3
+<!-- ```{solution} ex-recap-3
 ### YOUR CODE HERE ###
-```
-
+``` -->
 ```{exercise} DT
 :label: ex-recap-4
 Bekijk de waarde van `DT`. Hoe zorgt deze waaarde ervoor dat het onwaarschijnlijk is dat een botsing gemist wordt? Zet in het groene commentaar bij elke constante in welk eenheid deze wordt weergegeven.
@@ -95,7 +99,8 @@ RADIUS = 0.3                   # Straal van moleculen
 DT = 0.1 * RADIUS / V_0        # Tijdstap om geen botsing te missen
 ```
 
-### Particle class
+### 
+Particle class
 Ons `ParticleClass` definieert van een deeltje de massa $m$, snelheid $v$, positie $r$, en straal $R$. De positie moet per tijdstap bepaald worden. 
 
 Nieuw aan `ParticleClass` zijn twee properties, nl. `momentum` en `kin_energy`. Een property is eigenlijk een variabele die samenhangt met de waarde van andere variabelen binnen de klasse. Om de interne consistentie te bewaren moet je de juiste waarde van deze variabele dus telkens afleiden en dat doe je met een functie. Zo geeft `kin_energy` de kinetische energie terug van het deeltje door die af te leiden van de variabelen `m` en `v`.
@@ -184,7 +189,7 @@ Leg uit dat d.m.v. onderstaande code de deeltjes allemaal dezelfde snelheid hebb
 
 ```{solution} ex-recap-5
 Jouw antwoord hier...
-### YOUR CODE HERE ###
+deeltjes hebben een willekeurige snelheid in de $x$ richting tussen $-V_0$ en $+V_0$ maar voor kiezen van snelheid in $y$ richting wordt snelheid in $x$ richting meegenomen zodat $\sqrt{V_{0,x}^2+V_{0,y}}$ constant is. voor de positie is een uniforme verdeling gekozen waardoor elk deeltje een willekeurige positie heeft maar alle posities van alle deeltjes wel uniform over box verdeeld zijn
 ```
 
 ```python tags=["NB2_init"] editable=true slideshow={"slide_type": ""}
@@ -210,8 +215,8 @@ Leg uit hoe er in onderstaande code wordt voorkomen dat de botsing tussen twee d
 
 ```{solution} ex-recap-6
 Jouw antwoord hier...
-### YOUR CODE HERE ###
-```
+doordat steeds het paar van deeltje nummer $i$ en $i+1$ wordt getest op botsing wordt er voorkomen dat paren dubbel worden geteld (bijv het paar $i+1$ en $i$ wordt niet getest)
+``` 
 
 ```python editable=true slideshow={"slide_type": ""} tags=["NB2_init"]
 def handle_collisions(particles):
@@ -268,7 +273,7 @@ plt.ylim(-BOX_SIZE_0/2, BOX_SIZE_0/2)
 for p in particles:
     plt.plot(p.r[0], p.r[1], 'k.', ms=25)
     plt.arrow(p.r[0], p.r[1], p.v[0], p.v[1], 
-              head_width=0.05, head_length=0.1, color='red')
+              head_width=0.2, head_length=0.1, color='red')
 plt.show()
 ```
 
@@ -312,17 +317,29 @@ Voeg aan de simulatie een regel toe die voor elke tijdstap bepaalt wat de totale
 
 ```python tags=["NB2_ex7"]
 # plotten van kinetische energie als functie van tijd
-
+#enable first line to open graph in seperate window
+#%matplotlib qt
 particles = []
 energy_tot = []
 create_particles(particles)
 for i in range(100):
     take_time_step(particles)
-    # voeg de som van de kinetische energie in deze stap toe aan energy_tot 
-    ### YOUR CODE HERE ###
+    energy_tot.append(sum(p.kin_energy for p in particles))
+   
 
 # plot de figuur van de kinetische energie als functie van de tijd. 
-### YOUR CODE HERE ###
+plt.figure()
+plt.title("kinetische energie als functie van de tijd")
+plt.xlabel("tijd")
+plt.ylabel("totale kinetische energie")
+plt.plot(range(100),energy_tot,'r.')
+plt.show()
+#kijken op welke schaal totale energie verschilt
+plt.figure()
+plt.title("verschil totale energie tov beginenergie")
+plt.xlabel('tijd')
+plt.ylabel('verschil kinetische energie')
+plt.plot(range(100),[energy_tot[i]-energy_tot[0] for i in range(len(energy_tot))],'b.')
 ```
 
 ```{exercise} 
@@ -331,8 +348,7 @@ Als je heel nauwkeurig naar de waarde voor de totale kinetische energie kijkt, d
 ```
 
 ```{solution} ex-recap-8
-Jouw antwoord hier...
-### YOUR CODE HERE ###
+gebeurt op een energie schaal van $1e^{-15}$ en dit komt doordat hij meet met een tijdstap van $dt$, om fluctuaties te voorkomen zou er met $dt=0$ moeten worden gerekend
 ```
 
 
