@@ -340,6 +340,7 @@ plt.title("verschil totale energie tov beginenergie")
 plt.xlabel('tijd')
 plt.ylabel('verschil kinetische energie')
 plt.plot(range(100),[energy_tot[i]-energy_tot[0] for i in range(len(energy_tot))],'b.')
+plt.show()
 ```
 
 ```{exercise} 
@@ -373,6 +374,12 @@ def handle_collisions(particles):
 :label: ex-recap-10
 
 Leg uit wat deze code precies doet. 
+
+
+```{solution} ex-recap-10
+Dit script test voor elk deeltje (p1) of het botst, als het botst wordt het deeltje waar het tegenaan botst (p2) toegevoegd aan   de lijst van deeljtes die niet worden getest. Dit scheelt rekentijd door te voorkomen dat dezelfde botsing twee keer wordt berekend
+```
+
 
 Maak een script waarbij twee deeltjes met dezelfde (absolute) snelheid op een derde deeltje afbewegen en tegelijk zouden botsen.
 - Laat zien dat 'slechts' twee deeltjes een interactie met elkaar aan gaan.
@@ -517,15 +524,15 @@ v_0 = 1
 
 dt = 0.04
 
-# Aanmaken van deeltjes
+# Aanmaken van waterdeeltjes (blauw)
 for i in range(N-1):
     vx = np.random.uniform(-v_0,v_0)
     vy = np.random.choice([-1, 1])*np.sqrt(v_0**2-vx**2)        
     pos = Box_length_0*np.random.uniform(-1,1,2)
     particles.append(ParticleClass(m=1.0, v=[vx, vy], r = pos, R=.5,c='blue')) 
 
-particles.append(ParticleClass(m=20.0, v=[0, 0], r = [0, 0], R=.5,c='red')) 
-
+#voegt het zware 'Brownian' deeltje (Rood) toe aan de lijst met waterdeeltjes (Blauw) 
+particles.append(ParticleClass(m=20.0, v=[0, 0], r = [0, 0], R=.5,c='red'))
 ```
 
 ```{exercise} Brownian motion
@@ -536,7 +543,8 @@ Voeg voor deze regel goede metadata toe.
 ```
 
 ```{solution} ex-brownian-1
-### YOUR CODE HERE ###
+ voegt het zware 'Brownian' deeltje (Rood) toe aan de lijst met waterdeeltjes (Blauw) 
+
 ```
 
 
@@ -559,9 +567,9 @@ plt.ylim(-Box_length_0,Box_length_0)
 
 for particle, particle_object in enumerate(particles):
     plt.plot(particle_object.r[0],particle_object.r[1],color=particle_object.c,marker='.')
-    # plt.arrow(particle_object.r[0],particle_object.r[1], 
-    #           particle_object.v[0],particle_object.v[1], 
-    #           head_width=0.05, head_length=0.1, color='red')
+    plt.arrow(particle_object.r[0],particle_object.r[1], 
+              particle_object.v[0],particle_object.v[1], 
+              head_width=0.05, head_length=0.1, color='red')
 plt.show()
 
 ```
@@ -575,7 +583,8 @@ Hoe wordt er voor gezorgd dat de snelheid van elk deeltje gelijk is?
 ```
 
 ```{solution} ex-brownian-2
-### YOUR CODE HERE ###
+De code met comments ervoor plot de snelheidsvector van elk deeltje 
+De grootte van de vector is gelijk voor elk deeljte omdat in eerder geschreven code de lengte van vy al wordt bepaald door de lengte van de willekeurig gekozen vx, zodat len(v[0]=1)
 ```
 
 We gaan nu de functies van de simulatie weer aanroepen:
@@ -605,15 +614,15 @@ def particle_collision(p1: ParticleClass, p2: ParticleClass):
     p2.v += 2 * m1 / (m1 + m2) * dot_product / distance_squared * delta_r
 
 def handle_collisions(particles):
-    ### YOUR CODE HERE ###
     """ alle onderlinge botsingen afhandelen voor deeltjes in lijst """
+    counter=0
     num_particles = len(particles)
     for i in range(num_particles):
         for j in range(i+1, num_particles):
             if collide_detection(particles[i], particles[j]):
                 particle_collision(particles[i], particles[j])
-                ### YOUR CODE HERE ###
-
+                counter+=1
+    return(counter)
 ```
 
 In onderstaande code geven we de code voor de simulatie en volgen we de positie van het zware deeltje. 
@@ -622,10 +631,7 @@ In onderstaande code geven we de code voor de simulatie en volgen we de positie 
 # tracken van het zware deeltje
 track_x = []
 track_y = []
-
-### YOUR CODE HERE ###
-
-### YOUR CODE HERE ###
+botsingen=[]
 
 for i in range(400):
     ### YOUR CODE HERE ###
@@ -634,18 +640,26 @@ for i in range(400):
         p.update_position()    # Update positie        
         p.boxcollision()         # Wandbotsing werkt per deeltje
         
-    handle_collisions(particles)
-
-    ### YOUR CODE HERE ###
+    a=handle_collisions(particles)
+    botsingen.append(a)
+   
     
     track_x.append(particles[N-1].r[0])
     track_y.append(particles[N-1].r[1])
     
-### YOUR CODE HERE ###
+
 
 plt.figure()
 plt.plot(track_x,track_y,'r')
-### YOUR CODE HERE ###
+
+plt.show()
+t=np.arange(len(botsingen))*dt
+
+plt.figure()
+plt.plot(t,np.cumsum(botsingen))
+plt.xlabel('tijd')
+plt.ylabel('aantal botsingen')
+plt.title('aantal botsingen als functie van de tijd')
 plt.show()
 ```
 
@@ -668,7 +682,6 @@ ax.set_ylabel('y')
 ax.set_xlim(-Box_size_0/2, Box_size_0/2)
 ax.set_ylim(-Box_size_0/2, Box_size_0/2)
 ax.set_aspect('equal')
-
 # alle deeltjes als rode punten
 dots, = ax.plot([], [], 'ro', ms=18)
 
@@ -677,8 +690,8 @@ heavy_dot, = ax.plot([], [], 'ko', ms=20)   # zwaar
 light_dot, = ax.plot([], [], 'bo', ms=18)   # tweede (blauw)
 
 # ---- NIEUW: lijnen voor de paden ----
-heavy_path, = ax.plot([], [], 'k-', lw=1, alpha=0.8)
-light_path, = ax.plot([], [], 'b-', lw=1, alpha=0.8)
+heavy_path, = ax.plot([], [], 'k-',label='heavy particle', lw=1, alpha=0.8)
+light_path, = ax.plot([], [], 'b-',label='light particle', lw=1, alpha=0.8)
 
 def init():
     dots.set_data([], [])
@@ -689,13 +702,13 @@ def init():
     return dots, heavy_dot, light_dot, heavy_path, light_path
 
 def update(frame):
-    counter = 0
+    
 
     for p in particles:
         p.update_position()
         p.boxcollision()
 
-    handle_collisions(particles)
+    counter=handle_collisions(particles)
 
     botsingen.append(counter)
 
@@ -720,9 +733,9 @@ def update(frame):
     light_path.set_data(track_x2, track_y2)
 
     return dots, heavy_dot, light_dot, heavy_path, light_path
-
+ax.legend()
 ani = FuncAnimation(fig, update, frames=400, init_func=init, blit=True, interval=50)
-HTML(ani.to_jshtml())
+#HTML(ani.to_jshtml())
 
 
 # writer = FFMpegWriter(
@@ -733,6 +746,15 @@ HTML(ani.to_jshtml())
 
 # ani.save("deeltjes_hd.mp4", writer=writer, dpi=200)
 ani.save("deeltjes.gif", writer="pillow", fps=20)
+#aantal botsingen als functie van de tijd
+t=np.arange(len(botsingen))*dt
+
+plt.figure()
+plt.plot(t,np.cumsum(botsingen))
+plt.xlabel('tijd')
+plt.ylabel('aantal botsingen')
+plt.title('aantal botsingen als functie van de tijd')
+plt.show()
 ```
 
 ```{exercise} Brownian motion in beeld
@@ -744,7 +766,9 @@ ani.save("deeltjes.gif", writer="pillow", fps=20)
 ```
 
 ```{solution} ex-brownian-3
-### YOUR CODE HERE ###
+- Zowel het zware als het lichte deeltje beweegt in rechte lijnstukken die van richting veranderen wanneer ze in aanraking komen met de rode deeltjes, maar blauwe deeltje legt grote afstand af (dat is ook logisch aangezien zwaardere massa minder invloed van botsing met massa ondervind dan een lichter deeltje dat met zelfde massa botst)
+```
+- na meerdere keren runnen valt me vooral op dat de bewegingen van de deeltjes steeds verschillend zijn, dus de brownian motion is onvoorspelbaar, hoewel licthere deeltjes over het algemeen langere afstand afleggen vallen de individuele routes niet te voorspellen
 ```
 
 
@@ -758,7 +782,15 @@ Plot hieronder het aantal botsingen als functie van de tijd.
 ```
 
 ```python
-### YOUR CODE HERE ###
+#plot deze grafiek ook nu steeds na maken animatie, dat scheelt steeds opnieuw deze cell moeten runnen
+t=np.arange(len(botsingen))*dt
+
+plt.figure()
+plt.plot(t,np.cumsum(botsingen))
+plt.xlabel('tijd')
+plt.ylabel('aantal botsingen')
+plt.title('aantal botsingen als functie van de tijd')
+plt.show()
 ```
 
 ```{warning} 🌶 Let op!
