@@ -32,6 +32,7 @@ Eerst roepen we de juiste pakketten van Python aan en bepalen we de waardes van 
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from scipy import constants as BINAS #hierdoor kan je sneller en nauwkeuriger constanten gebruiken (en de naam is gw leuk)
 
 BOX_SIZE_0 = 10                # Hoogte en lengte startvolume
 N = 40                         # Aantal deeltjes
@@ -223,7 +224,14 @@ Schrijf een functie die de temperatuur van het gas in onze simulatie bepaalt:
 ```python tags=["NB3_tempfun"]
 def temperature(particles) -> float:
     temp = 0.0 
-    ### YOUR CODE HERE ###
+    #aantal vrijheidsgraden is gelijk aan 2 aangezien we het over een 2D simulatie hebben hier.
+    f=freedeg=2
+    total_energy=0
+    k=BINAS.Boltzmann
+    for p in particles:
+        total_energy+=p.kin_energy
+    average_energy=total_energy/len(particles)
+    temp=(2*average_energy)/(f*k)
     return temp
 ```
 
@@ -246,14 +254,16 @@ create_particles(particles)
 for i in range(100):
     take_time_step(particles)
     # vastleggen van temperatuur per tijdstap
-    ### YOUR CODE HERE ###
+    temperatures[i]=temperature_si(particles)
 
 plt.figure()
-plt.xlabel('Time')
-plt.ylabel('Temperature')
+plt.title('Temperatuur-Tijd diagram')
+plt.xlabel('Tijdstap')
+plt.ylabel('Temperatuur')
 # plotten van tijd tegen temperatuur
-### YOUR CODE HERE ###
+plt.plot(times,temperatures,'r-', label='Temperatuur als functie van de tijdstap')
 plt.show()
+#als het goed is zou de temperatuur een horizontale lijn moeten zijn, bj elastische botsingen blijven totale energie en dus ook temperatuur gelijk
 ```
 
 <!-- #region tags=[] -->
@@ -265,6 +275,52 @@ In een vorige module heb je de vermenigvuldigingsfactoren en eenheden bij de con
 - Breid de berekening uit, zodat de eenheden kloppen bij het model dat we probeerden weer te geven.
 ```
 <!-- #endregion -->
+
+```python
+# lucht wordt hier benaderd als stikstof (N2), omdat lucht voor ongeveer 78% uit stikstof bestaat
+
+#berekende vermenigvuldigingsfactoren en eenheden uit NB2
+A_echt=2.540300312e-18 #oppervlak van gasmolecuul, dit is berekende 3D volume van gasmolecuul tot de macht 2/3, waardoor het het 2D oppervlak wordt, in m^2
+v_echt=4.172296005e2 #snelheid van gasmolecuul bij kamertemperatuur in 2D, in m/s
+m_echt=4.65e-26 #massa van molecuul stikstof, dit is ook gebruikt om v_echt te berekenen in NB2
+
+#omrekenen van simulatie naar echte waarden
+lengtefactor=np.sqrt(A_echt/(BOX_SIZE_0**2/N))
+snelheidsfactor=v_echt/V_0
+massafactor=m_echt/1.0
+tijdfactor=lengtefactor/snelheidsfactor
+
+```
+
+```python
+def temperature_si(particles) -> float:
+    """Temperatuur van het gas in Kelvin (K) na omrekenen naar SI eenheden"""
+    energiefactor = massafactor*snelheidsfactor**2
+    return temperature(particles)*energiefactor
+    
+```
+
+```python
+#verbeterde plot met beide assen nu in SI eenheden
+particles = []
+temperatures = np.zeros(100, dtype=float)
+times = np.linspace(1, 100, 100)
+tijd_echt=times*DT*tijdfactor
+
+create_particles(particles)
+for i in range(100):
+    take_time_step(particles)
+    # vastleggen van temperatuur per tijdstap
+    temperatures[i]=temperature_si(particles)
+
+plt.figure()
+plt.title('Temperatuur-Tijd diagram (nu in SI-eenheden)')
+plt.xlabel(r'Tijd $t$ $\mathrm{(s)}$')
+plt.ylabel(r'Temperatuur $T$ $\mathrm{(K)}$')
+# plotten van tijd tegen temperatuur
+plt.plot(tijd_echt,temperatures,'b-', label='Temperatuur als functie van de tijdstap')
+plt.show()
+```
 
 ## Druk
 
